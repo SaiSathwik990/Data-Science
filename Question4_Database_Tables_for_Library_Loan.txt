@@ -1,0 +1,119 @@
+/*
+Library Loan Tracking Database
+In this project we developed database for library who lend books on loan and all the patron must returned book in given checkout period time
+otherwise fine will be applied and this fine will be collected as library revenue. This library maintain various categories such as Books, Disc,
+Magazine, Audio Tapes etc. Each item will have two different checkout periods for adult and children’s where adult has to return in two weeks 
+and children’s has a check period of 4 weeks. 
+*/
+
+-- database schema for library loan record tracking system
+
+create database libraryloantracking;
+use libraryloantracking;
+
+create table LibraryItem(ItemID varchar(25) primary key, Name varchar(50), description varchar(200));
+
+create table ItemType(TypeID varchar(25), Name varchar(50));
+
+create table ItemCategory(CategoryID varchar(25) primary key, Name varchar(50),CheckoutPeriod int, NonpfRewards double precision);
+
+create table ItemCopies(CopyID varchar(25) primary Key, ItemID varchar(25), quantity int,
+FOREIGN KEY (ItemID) REFERENCES LibraryItem(ItemID));
+
+create table Patron(PatronCardID varchar(25) primary Key, PhoneNumber varchar(15));
+
+create table Loan(LoanID varchar(25) primary key, PatronCardID varchar(25),LoanDate date, LoanFine double precision,
+FOREIGN KEY (PatronCardID) REFERENCES Patron(PatronCardID));
+
+create table pendingrequest(request_id varchar(25) primary key, Name varchar(50), status varchar(20));
+
+insert into ItemType(TypeID, Name) values ('books','Jungle Book');
+insert into ItemType(TypeID, Name) values ('magazines','The New York Times Magazine');
+insert into ItemType(TypeID, Name) values ('movies','Titanic');
+insert into ItemType(TypeID, Name) values ('compact discs','Harry Potter');
+insert into ItemType(TypeID, Name) values ('audio tapes.','Tom & Jerry');
+
+insert into LibraryItem(ItemID, Name, description) values ('I01', 'Jungle Book', 'Childrens Story'); 
+insert into LibraryItem(ItemID, Name, description) values ('I02', 'The New York Times Magazine', 'All US News'); 
+insert into LibraryItem(ItemID, Name, description) values ('I03', 'Titanic', 'Movie made on titanic accident'); 
+insert into LibraryItem(ItemID, Name, description) values ('I04', 'Harry Potter', 'Childresm Movie'); 
+insert into LibraryItem(ItemID, Name, description) values ('I05', 'Tom & Jerry', 'Childrens Cartoon'); 
+
+insert into ItemCategory(CategoryID, Name, CheckoutPeriod, NonpfRewards) values ('C01', 'Jungle Book', 30, 10.0);
+insert into ItemCategory(CategoryID, Name, CheckoutPeriod, NonpfRewards) values ('C02', 'The New York Times Magazine', 15, 5.0);
+insert into ItemCategory(CategoryID, Name, CheckoutPeriod, NonpfRewards) values ('C03', 'Titanic', 15, 5.0);
+insert into ItemCategory(CategoryID, Name, CheckoutPeriod, NonpfRewards) values ('C04', 'Harry Potter', 30, 10.0);
+insert into ItemCategory(CategoryID, Name, CheckoutPeriod, NonpfRewards) values ('C05', 'Tom & Jerry', 30, 10.0);
+
+
+insert into ItemCopies(CopyID, ItemID, quantity) values ('1', 'I01', 100);
+insert into ItemCopies(CopyID, ItemID, quantity) values ('2', 'I02', 1000);
+insert into ItemCopies(CopyID, ItemID, quantity) values ('3', 'I03', 80);
+insert into ItemCopies(CopyID, ItemID, quantity) values ('4', 'I04', 200);
+insert into ItemCopies(CopyID, ItemID, quantity) values ('5', 'I05', 150);
+
+
+insert into Patron(PatronCardID, PhoneNumber) values ('P1', '123-0987655432');
+insert into Patron(PatronCardID, PhoneNumber) values ('P2', '123-0987655443');
+insert into Patron(PatronCardID, PhoneNumber) values ('P3', '123-0987655455');
+insert into Patron(PatronCardID, PhoneNumber) values ('P4', '123-0987655466');
+
+
+insert into Loan(LoanID, PatronCardID, LoanDate, LoanFine) values ('L1', 'P1', '2022-12-05', 20.0);
+insert into Loan(LoanID, PatronCardID, LoanDate, LoanFine) values ('L2', 'P4', '2022-12-03', 30.0);
+insert into Loan(LoanID, PatronCardID, LoanDate, LoanFine) values ('L3', 'P3', '2022-12-02', 15.0);
+
+insert into pendingrequest(request_id, Name, status) values ('1', 'Duck Tales', 'Pending');
+insert into pendingrequest(request_id, Name, status) values ('2', 'Alice Adventures in Wonderland', 'Pending');
+
+========================================QUERIES to READ============================================================
+Query 1: List the number of copies of a particular library item.
+
+select quantity from ItemCopies, LibraryItem where LibraryItem.Name = 'Jungle Book' and LibraryItem.ItemID = ItemCopies.ItemID;
+
+Query 2: List the details of the patrons who have at least an overdue library item today.
+
+select Patron.PatronCardID, Patron.PhoneNumber, Loan.LoanFine from Patron,Loan where Loan.LoanFine > 0 and Patron.PatronCardID = Loan.PatronCardID;
+
+Query 3: Identify the total fine owed by a patron (by his/her library card number) currently in the system.
+
+select sum(LoanFine) as FineOwed from Loan where PatronCardID = 'P4';
+
+
+Query 4: List the details (e.g., damage, loss, amount, etc.) of the payment made by a patron.
+
+select sum(LoanFine) as Damage_loss_amount from Loan where PatronCardID = 'P1';
+
+Query 5: List the copies of library items that are grossly overdue.
+
+select count(*) as overdue from Loan;
+
+
+Query 6: List the details of the current pending requests in the system.
+
+select * from pendingrequest;
+
+Query 7: Identify the total fine revenue to the library between August 1, 2022 to December 31, 2022.
+
+select sum(LoanFine) as Total_Revenue from Loan where LoanDate between '2022-08-01' and '2022-12-31';
+
+Query 8: List the details of the checkout periods and the numbers of renewals for all the categories of library items.
+
+select Name, CheckoutPeriod from ItemCategory;
+
+Query 9: List the total number of library items that are checked out and renewed by a patron.
+
+select count(*) as Num_Check_out from ItemCategory where NonpfRewards > 0;
+
+Query 10: Insert a new pending request made by a patron.
+
+insert into pendingrequest(request_id, Name, status) values ('3', 'Lord of the Rings', 'Pending');
+
+
+===========================QUERIES TO UPDATE=====================================
+
+update ItemCopies set quantity = 200 where ItemID = 'I01';
+
+===========================QUERIES TO DELETE=====================================
+
+delete from ItemCopies where ItemID = 'I01';
